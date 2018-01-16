@@ -30,3 +30,19 @@ mean(ind.err)
 #method3
 err.te <- 1-sum(diag(table(y[id.te],yte))) /nte
 err.te
+
+
+#Day2
+library(help = mlbench)#show content of the dataset
+library(mlbench)
+data('PimaIndiansDiabetes')
+dim(PimaIndiansDiabetes)
+?PimaIndiansDiabetes
+help(PimaIndiansDiabetes)
+head(PimaIndiansDiabetes)
+str(PimaIndiansDiabetes)
+xy <- PimaIndiansDiabetes    
+xy[,9]
+dim(xy[,-9])
+xy[3,] #information about the 3rd woman
+xy[c(5,12,17),] #information about the 5th, 12th and 17th patient.
