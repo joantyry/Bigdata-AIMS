@@ -1,0 +1,976 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Template for AIMS Rwanda Assignments         %%%              %%%
+%%% Author:   AIMS Rwanda tutors                             %%%   ###        %%%
+%%% Email: tutors2017-18@aims.ac.rw                               %%%   ###        %%%
+%%% Copyright: This template was designed to be used for    %%% #######      %%%
+%%% the assignments at AIMS Rwanda during the academic year %%%   ###        %%%
+%%% 2017-2018.                                              %%%   #########  %%%
+%%% You are free to alter any part of this document for     %%%   ###   ###  %%%
+%%% yourself and for distribution.                          %%%   ###   ###  %%%
+%%%                                                         %%%              %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%% Ensure that you do not write the questions before each of the solutions because it is not necessary. %%%%%% 
+
+\documentclass[12pt,a4paper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%% packages %%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage[all]{xy}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage[left=2cm,right=2cm,top=3cm,bottom=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{psfrag}
+\usepackage{braket}
+\usepackage{multirow}
+%%%%%%%%%%%%%%%%%%%%% students data %%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\student}{Joan Ngure}
+\newcommand{\course}{Big Data and Machine Learning}
+\newcommand{\assignment}{2}
+
+%%%%%%%%%%%%%%%%%%% using theorem style %%%%%%%%%%%%%%%%%%%%
+\newtheorem{thm}{Theorem}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{exa}[thm]{Example}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{coro}[thm]{Corollary}
+\newtheorem{quest}{Question}[section]
+
+%%%%%%%%%%%%%%  Shortcut for usual set of numbers  %%%%%%%%%%%
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555
+\begin{document}
+<<setup, include=FALSE, cache=FALSE, echo=FALSE>>=
+library(knitr)
+# set global chunk options
+opts_chunk$set(fig.path='./', fig.align='center', fig.show='hold')
+options(formatR.arrow=TRUE, width=90)
+options(digits=3)
+@
+%\SweaveOpts{concordance=TRUE}
+
+%%%%%%%%%%%%%%%%%%%%%%% title page %%%%%%%%%%%%%%%%%%%%%%%%%%
+\thispagestyle{empty}
+\begin{center}
+\textbf{AFRICAN INSTITUTE FOR MATHEMATICAL SCIENCES \\[0.5cm]
+(AIMS RWANDA, KIGALI)}
+\vspace{1.0cm}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%% assignment information %%%%%%%%%%%%%%%%
+\noindent
+\rule{17cm}{0.2cm}\\[0.3cm]
+Name: \student \hfill Assignment Number:  \assignment\\[0.1cm]
+Course: \course \hfill Date: \today\\
+\rule{17cm}{0.05cm}
+\vspace{1.0cm}
+%\section{Question 1}
+%The valu
+\section{Exercise 1}
+\begin{enumerate}
+\item
+<<>>=
+ set.seed(10121967)
+   
+#  clear screen
+
+   graphics.off()
+
+#  Libraries
+
+   library(MASS)
+   library(car)
+   library(kernlab)  
+   library(rpart)
+   library(randomForest)
+   library(class)
+   library(ada)
+   library(rda)
+   library(e1071)
+   library(nnet)
+   library(ipred)
+   
+
+#  Functions   
+
+   unitlength <-function(xx)
+   {
+     n <- nrow(xx)
+     p <- ncol(xx)
+     aa  <- matrix(rep(apply(xx,2,mean), n), ncol=p, byrow=TRUE)
+     bb  <- sqrt((n-1)*matrix(rep(apply(xx,2,var), n), ncol=p, byrow=TRUE))
+     return((xx-aa)/bb)
+   }
+
+#  Standardizing the data
+
+   standard <-function(xx)
+   {
+     n <- nrow(xx)
+     p <- ncol(xx)
+     aa  <- matrix(rep(apply(xx,2,mean), n), ncol=p, byrow=TRUE)
+     bb  <- sqrt(matrix(rep(apply(xx,2,var), n), ncol=p, byrow=TRUE))
+     return((xx-aa)/bb)
+   }
+
+#  Unit cube
+
+   cube <-function(xx)
+   {
+     n <- nrow(xx)
+     p <- ncol(xx)
+     aa  <- matrix(rep(apply(xx,2,min), n), ncol=p, byrow=TRUE)
+     bb  <- matrix(rep(apply(xx,2,max), n), ncol=p, byrow=TRUE)
+     return((xx-aa)/(bb-aa))
+   }
+
+#  Neighborhood size 
+
+   neighborhood <-function(Pima)
+   {
+      p  <- ncol(Pima)-1
+      y  <- Pima[,p+1]
+      n  <- nrow(Pima)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          yhat.te <- knn(Pima[id.tr,-(p+1)],  Pima[-id.tr,-(p+1)], Pima[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(Pima[-id.tr,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=err.k[,2],opt=min(which(merr.k==min(merr.k)))))
+   } 
+
+Pima <- data.frame(rbind(Pima.tr, Pima.te))
+p   <- ncol(Pima)-1
+   pos <- p + 1
+   y   <- Pima[,pos]
+   n   <- nrow(Pima)
+   colnames(Pima)[pos] <- 'y'
+   
+   Pima$y <- ifelse(Pima$y=='Yes',1,0)
+
+   Pima$y <- as.factor(ifelse(Pima$y==unique(Pima$y)[1],'failure','success'))
+
+#  Standardize the predictor variables
+
+   Pima[,-pos] <- standard(Pima[,-pos])
+   
+   neighbors <- neighborhood(Pima)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(Pima$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(Pima$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      Pima.tr <- Pima[c(id.F.tr,id.S.tr), ]
+      Pima.te <- Pima[c(id.F.te,id.S.te), ]
+      ntr <- nrow(Pima.tr)
+      nte <- n - ntr
+
+      svm.Pima <- ksvm(y~., data=Pima.tr)
+      yhat.svm <- predict(svm.Pima, Pima.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(Pima.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.Pima <- rpart(y~., data=Pima.tr)
+      yhat.tree <- predict(tree.Pima, Pima.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(Pima.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.Pima <- randomForest(y~., data=Pima.tr, nbtree=L)
+      yhat.forest <- predict(forest.Pima, Pima.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(Pima.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(Pima.tr[,-pos],  Pima.te[,-(pos)], Pima.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(Pima.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.Pima <- bagging(y~., data=Pima.tr)
+      yhat.bagging <- predict(bagging.Pima, Pima.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(Pima.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+   
+@
+\item
+
+<<>>=
+  
+#  Neighborhood size 
+
+   neighborhood <-function(Crabs)
+   {
+      p  <- ncol(Crabs)-1
+      y  <- Crabs[,p+1]
+      n  <- nrow(Crabs)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          yhat.te <- knn(Crabs[id.tr,-(p+1)],  Crabs[-id.tr,-(p+1)], Crabs[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(Crabs[-id.tr,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=err.k[,2],opt=min(which(merr.k==min(merr.k)))))
+   } 
+
+Crabs <- data.frame(crabs[,4:7], crabs[,2])
+p   <- ncol(Crabs)-1
+   pos <- p + 1
+   y   <- Crabs[,pos]
+   n   <- nrow(Crabs)
+   colnames(Crabs)[pos] <- 'y'
+   Crabs$y <- ifelse(Crabs$y == 'M',0,1)
+
+   Crabs$y <- as.factor(ifelse(Crabs$y==unique(Crabs$y)[1],'failure','success'))
+
+#  Standardize the predictor variables
+
+   Crabs[,-pos] <- standard(Crabs[,-pos])
+   
+   neighbors <- neighborhood(Crabs)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+    #Crabs <- data.frame(crabs[,4:7], crabs[,2])
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(Crabs$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(Crabs$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      Crabs.tr <- Crabs[c(id.F.tr,id.S.tr), ]
+      Crabs.te <- Crabs[c(id.F.te,id.S.te), ]
+      ntr <- nrow(Crabs.tr)
+      nte <- n - ntr
+
+      svm.Crabs <- ksvm(y~., data=Crabs.tr)
+      yhat.svm <- predict(svm.Crabs, Crabs.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(Crabs.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.Crabs <- rpart(y~., data=Crabs.tr)
+      yhat.tree <- predict(tree.Crabs, Crabs.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(Crabs.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.Crabs <- randomForest(y~., data=Crabs.tr, nbtree=L)
+      yhat.forest <- predict(forest.Crabs, Crabs.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(Crabs.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(Crabs.tr[,-pos], Crabs.te[,-(pos)], Crabs.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(Crabs.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.Crabs <- bagging(y~., data=Crabs.tr)
+      yhat.bagging <- predict(bagging.Crabs, Crabs.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(Crabs.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+@
+\item
+% <<>>=
+%   
+% #  Neighborhood size 
+% 
+%    neighborhood <-function(spam)
+%    {
+%       p  <- ncol(spam)-1
+%       y  <- spam[,p+1]
+%       n  <- nrow(spam)
+%       max.k <- 10
+%       err.k <- matrix(0, ncol=max.k, nrow=50)
+%      
+%       for(j in 1:50)
+%       {
+%         for(k in 1:max.k)
+%         {
+%           id.tr <- sample(1:n, round(.7*n))
+%           yhat.te <- knn(spam[id.tr,-(p+1)],  spam[-id.tr,-(p+1)],spam[id.tr,(p+1)], k=k)
+%           err.k[j,k] <- sum(diag(prop.table(table(spam[-id.tr,p+1],yhat.te))))
+%         }
+%       }
+%       merr.k <- apply(err.k, 2, mean)
+%       return(list(err=err.k[,2],opt=min(which(merr.k==min(merr.k)))))
+%    } 
+% 
+% spam <- read.csv('spam.csv')
+% p   <- ncol(spam)-1
+%    pos <- p + 1
+%    y   <- spam[,pos]
+%    n   <- nrow(spam)
+%    colnames(spam)[pos] <- 'y'
+% 
+%    spam$y <- as.factor(ifelse(spam$y==unique(spam$y)[1],'success','failure'))
+% 
+% #  Standardize the predictor variables
+% 
+%   spam[,-pos] <- standard(spam[,-pos])
+%    
+%    neighbors <- neighborhood(spam)
+%    k.opt <- neighbors$opt
+%    
+% #  Prediction error as a function of k
+%    
+%    error.cv <- neighbors$err
+%    plot(error.cv, type='b')
+%    
+%    
+% #  Set the total number of replications 
+% 
+%    R <- 100
+%    L         <- 100
+%    
+% #  Initialize the test error vector
+% 
+%    err <- matrix(0, ncol=5, nrow=R)
+% 
+%    for(r in 1:R)
+%    {
+%  
+%       id.F    <- which(spam$y == 'failure')
+%       n.F     <- length(id.F)
+%       id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+%       id.F.te <- setdiff(id.F, id.F.tr)
+% 
+%       id.S <- which(spam$y == 'success')
+%       n.S  <- length(id.S)
+%       id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+%       id.S.te <- setdiff(id.S, id.S.tr)
+% 
+%       spam.tr <- spam[c(id.F.tr,id.S.tr), ]
+%      spam.te <- spam[c(id.F.te,id.S.te), ]
+%       ntr <- nrow(spam.tr)
+%       nte <- n - ntr
+% 
+%       svm.spam <- ksvm(y~., data=spam.tr)
+%       yhat.svm <- predict(svm.spam, spam.te[,-(pos)])
+%       err.svm <- 1-sum(diag(table(spam.te$y, yhat.svm)))/nte
+% 
+%       err[r,1] <- err.svm
+% 
+%       tree.spam <- rpart(y~., data=spam.tr)
+%       yhat.tree <- predict(tree.spam, spam.te[,-(pos)], type='class')
+%       err.tree <- 1-sum(diag(table(spam.te$y, yhat.tree)))/nte
+%    
+%       err[r,2] <- err.tree
+% 
+%       forest.spam <- randomForest(y~., data=spam.tr, nbtree=L)
+%       yhat.forest <- predict(forest.spam, spam.te[,-(pos)], type='class')
+%       err.forest <- 1-sum(diag(table(spam.te$y, yhat.forest)))/nte
+% 
+%       err[r,3] <- err.forest
+% 
+%       yhat.kNN <- knn(spam.tr[,-pos], spam.te[,-(pos)], spam.tr[,(pos)], k=k.opt)
+%       err.knn <- 1-sum(diag(table(spam.te$y, yhat.kNN)))/nte
+%       
+%       err[r,4] <- err.knn 
+% 
+%       bagging.spam <- bagging(y~., data=spam.tr)
+%       yhat.bagging <- predict(bagging.spam, spam.te[,-(pos)])
+%       err.bagging <- 1-sum(diag(table(spam.te$y, yhat.bagging)))/nte
+%       
+%       err[r,5] <- err.bagging
+% 
+%       if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+%    }
+% 
+%    #windows()
+%    boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+% 
+%    #windows()
+%    avg.err <- round(apply(err, 2, mean),4)
+%    plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+%    text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+%    #abline(h=bayes.risk, lwd=3, col='red')
+% @
+\item
+<<>>=
+neighborhood <-function(accent)
+   {
+      p  <- ncol(accent)-1
+      y  <- accent[,p+1]
+      n  <- nrow(accent)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          id.te <- setdiff(1:n, id.tr)
+          yhat.te <- knn(accent[id.tr,-(p+1)],  accent[id.te,-(p+1)], accent[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(accent[id.te,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=merr.k,opt=min(which(merr.k==min(merr.k)))))
+   } 
+ accent <- read.csv('accent-mfcc-data-1.csv')
+ f <- accent[,-1]
+   h <- accent[,1]
+   accent <- cbind(f,h)
+   p   <- ncol(accent)-1
+   pos <- p+1
+   y   <- accent[,pos]
+   n   <- nrow(accent)
+   colnames(accent)[pos] <- 'y'
+   
+  accent$y <- ifelse(y == 'US', 1,-1)
+   accent$y <- as.factor(ifelse(accent$y==unique(accent$y)[-1],'success','failure'))
+
+#  Standardize the predictor variables
+
+   accent[,-pos] <- standard(accent[,-pos])
+
+
+#  Determine the optimal neighborhood size k.opt by re-sampling
+
+   neighbors <- neighborhood(accent)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(accent$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(accent$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      accent.tr <- accent[c(id.F.tr,id.S.tr), ]
+      accent.te <- accent[c(id.F.te,id.S.te), ]
+      ntr <- nrow(accent.tr)
+      nte <- n - ntr
+
+      svm.accent <- ksvm(y~., data=accent.tr)
+      yhat.svm <- predict(svm.accent, accent.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(accent.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.accent <- rpart(y~., data=accent.tr)
+      yhat.tree <- predict(tree.accent, accent.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(accent.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.accent <- randomForest(y~., data=accent.tr, nbtree=L)
+      yhat.forest <- predict(forest.accent, accent.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(accent.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(accent.tr[,-pos],  accent.te[,-(pos)], accent.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(accent.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.accent <- bagging(y~., data=accent.tr)
+      yhat.bagging <- predict(bagging.accent, accent.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(accent.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+   
+@
+item
+<<>>=
+neighborhood <-function(prostate)
+   {
+      p  <- ncol(prostate)-1
+      y  <- prostate[,p+1]
+      n  <- nrow(prostate)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          id.te <- setdiff(1:n, id.tr)
+          yhat.te <- knn(prostate[id.tr,-(p+1)],  prostate[id.te,-(p+1)], prostate[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(prostate[id.te,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=merr.k,opt=min(which(merr.k==min(merr.k)))))
+   } 
+ prostate <- read.csv('prostate-cancer-1(1).csv')
+ l <- prostate[,-1]
+   k <- prostate[,1]
+   prostate <- cbind(l,k)
+ 
+   p   <- ncol(prostate)-1
+   pos <- p+1
+   y   <- prostate[,pos]
+   n   <- nrow(prostate)
+   colnames(prostate)[pos] <- 'y'
+   
+ 
+   prostate$y <- as.factor(ifelse(prostate$y==unique(prostate$y)[1],'success','failure'))
+
+#  Standardize the predictor variables
+
+   prostate[,-pos] <- standard(prostate[,-pos])
+
+
+#  Determine the optimal neighborhood size k.opt by re-sampling
+
+   neighbors <- neighborhood(prostate)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(prostate$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(prostate$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      prostate.tr <- prostate[c(id.F.tr,id.S.tr), ]
+      prostate.te <- prostate[c(id.F.te,id.S.te), ]
+      ntr <- nrow(prostate.tr)
+      nte <- n - ntr
+
+      svm.prostate <- ksvm(y~., data=prostate.tr)
+      yhat.svm <- predict(svm.prostate, prostate.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(prostate.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.prostate <- rpart(y~., data=prostate.tr)
+      yhat.tree <- predict(tree.prostate, prostate.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(prostate.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.prostate <- randomForest(y~., data=prostate.tr, nbtree=L)
+      yhat.forest <- predict(forest.prostate, prostate.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(prostate.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(prostate.tr[,-pos],  prostate.te[,-(pos)], prostate.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(prostate.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.prostate <- bagging(y~., data=prostate.tr)
+      yhat.bagging <- predict(bagging.prostate, prostate.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(prostate.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+   
+@
+\item
+<<>>=
+neighborhood <-function(banana)
+   {
+      p  <- ncol(banana)-1
+      y  <- banana[,p+1]
+      n  <- nrow(banana)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          id.te <- setdiff(1:n, id.tr)
+          yhat.te <- knn(banana[id.tr,-(p+1)],  banana[id.te,-(p+1)], banana[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(banana[id.te,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=merr.k,opt=min(which(merr.k==min(merr.k)))))
+   } 
+ banana <- read.csv('banana-shaped-data-1.csv')
+ 
+ 
+   p   <- ncol(banana)-1
+   pos <- p+1
+   y   <- banana[,pos]
+   n   <- nrow(banana)
+   colnames(banana)[pos] <- 'y'
+   
+ 
+   banana$y <- as.factor(ifelse(banana$y==unique(banana$y)[-1],'success','failure'))
+
+#  Standardize the predictor variables
+
+   banana[,-pos] <- standard(banana[,-pos])
+
+
+#  Determine the optimal neighborhood size k.opt by re-sampling
+
+   neighbors <- neighborhood(banana)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(banana$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(banana$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      banana.tr <- banana[c(id.F.tr,id.S.tr), ]
+      banana.te <- banana[c(id.F.te,id.S.te), ]
+      ntr <- nrow(banana.tr)
+      nte <- n - ntr
+
+      svm.banana <- ksvm(y~., data=banana.tr)
+      yhat.svm <- predict(svm.banana, banana.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(banana.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.banana <- rpart(y~., data=banana.tr)
+      yhat.tree <- predict(tree.banana, banana.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(banana.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.banana <- randomForest(y~., data=banana.tr, nbtree=L)
+      yhat.forest <- predict(forest.banana, banana.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(banana.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(banana.tr[,-pos],  banana.te[,-(pos)], banana.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(banana.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.banana <- bagging(y~., data=banana.tr)
+      yhat.bagging <- predict(bagging.banana, banana.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(banana.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+   
+@
+\item
+<<>>=
+neighborhood <-function(four)
+   {
+      p  <- ncol(four)-1
+      y  <- four[,p+1]
+      n  <- nrow(four)
+      max.k <- 10
+      err.k <- matrix(0, ncol=max.k, nrow=50)
+     
+      for(j in 1:50)
+      {
+        for(k in 1:max.k)
+        {
+          id.tr <- sample(1:n, round(.7*n))
+          id.te <- setdiff(1:n, id.tr)
+          yhat.te <- knn(four[id.tr,-(p+1)],  four[id.te,-(p+1)], four[id.tr,(p+1)], k=k)
+          err.k[j,k] <- sum(diag(prop.table(table(four[id.te,p+1],yhat.te))))
+        }
+      }
+      merr.k <- apply(err.k, 2, mean)
+      return(list(err=merr.k,opt=min(which(merr.k==min(merr.k)))))
+   } 
+ four <- read.csv('four-corners-data-1.csv')
+ 
+ 
+   p   <- ncol(four)-1
+   pos <- p+1
+   y   <- four[,pos]
+   n   <- nrow(four)
+   colnames(four)[pos] <- 'y'
+   
+ 
+   four$y <- as.factor(ifelse(four$y==unique(four$y)[1],'success','failure'))
+
+
+   #  Standardize the predictor variables
+
+   four[,-pos] <- standard(four[,-pos])
+
+
+#  Determine the optimal neighborhood size k.opt by re-sampling
+
+   neighbors <- neighborhood(four)
+   k.opt <- neighbors$opt
+   
+#  Prediction error as a function of k
+   
+   error.cv <- neighbors$err
+   plot(error.cv, type='b')
+   
+#  Set the total number of replications 
+
+   R <- 100
+   L         <- 100
+   
+#  Initialize the test error vector
+
+   err <- matrix(0, ncol=5, nrow=R)
+
+   for(r in 1:R)
+   {
+ 
+      id.F    <- which(four$y == 'failure')
+      n.F     <- length(id.F)
+      id.F.tr <- sample(sample(sample(id.F)))[1:round(0.7*n.F)]
+      id.F.te <- setdiff(id.F, id.F.tr)
+
+      id.S <- which(four$y == 'success')
+      n.S  <- length(id.S)
+      id.S.tr <- sample(sample(sample(id.S)))[1:round(0.7*n.S)]
+      id.S.te <- setdiff(id.S, id.S.tr)
+
+      four.tr <- four[c(id.F.tr,id.S.tr), ]
+      four.te <- four[c(id.F.te,id.S.te), ]
+      ntr <- nrow(four.tr)
+      nte <- n - ntr
+
+      svm.four <- ksvm(y~., data=four.tr)
+      yhat.svm <- predict(svm.four, four.te[,-(pos)])
+      err.svm <- 1-sum(diag(table(four.te$y, yhat.svm)))/nte
+
+      err[r,1] <- err.svm
+
+      tree.four <- rpart(y~., data=four.tr)
+      yhat.tree <- predict(tree.four, four.te[,-(pos)], type='class')
+      err.tree <- 1-sum(diag(table(four.te$y, yhat.tree)))/nte
+   
+      err[r,2] <- err.tree
+
+      forest.four <- randomForest(y~., data=four.tr, nbtree=L)
+      yhat.forest <- predict(forest.four, four.te[,-(pos)], type='class')
+      err.forest <- 1-sum(diag(table(four.te$y, yhat.forest)))/nte
+
+      err[r,3] <- err.forest
+
+      yhat.kNN <- knn(four.tr[,-pos],  four.te[,-(pos)], four.tr[,(pos)], k=k.opt)
+      err.knn <- 1-sum(diag(table(four.te$y, yhat.kNN)))/nte
+      
+      err[r,4] <- err.knn 
+
+      bagging.four <- bagging(y~., data=four.tr)
+      yhat.bagging <- predict(bagging.four, four.te[,-(pos)])
+      err.bagging <- 1-sum(diag(table(four.te$y, yhat.bagging)))/nte
+      
+      err[r,5] <- err.bagging
+
+      if (r%%25==0)  cat('\n', round(100*r/R,0),'completed\n')
+   }
+
+   #windows()
+   boxplot(err, col=c(2,3,4,5,6), names=c('SVM','CART','rForest','kNN', 'Bagging'))
+
+   #windows()
+   avg.err <- round(apply(err, 2, mean),4)
+   plot(1:5, avg.err, ylab='Average prediction error', xlab='Method (Classifier)',xlim=c(0,10), ylim=c(0.90*min(avg.err),1.10*max(avg.err)))
+   text(1:5, avg.err, col=c(2,3,4,5,6), labels=c('SVM','CART','rForest', 'kNN',  'Bagging'), pos=4)
+   #abline(h=bayes.risk, lwd=3, col='red')
+   
+  @ 
+
+\end{enumerate}
+\end{document}
